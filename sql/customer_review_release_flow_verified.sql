@@ -86,7 +86,7 @@ begin
         service_id %s not null references public.services(id) on delete restrict,
         rating integer not null check (rating between 1 and 5),
         comment text,
-        status text not null default ''approved'' check (status in (''approved'', ''hidden'')),
+        status text not null default ''pending'' check (status in (''pending'', ''approved'', ''hidden'')),
         admin_reply text,
         replied_at timestamptz,
         is_featured boolean not null default false,
@@ -101,7 +101,7 @@ alter table public.service_reviews
   add column if not exists admin_reply text,
   add column if not exists replied_at timestamptz,
   add column if not exists is_featured boolean not null default false,
-  add column if not exists status text not null default 'approved',
+  add column if not exists status text not null default 'pending',
   add column if not exists updated_at timestamptz not null default now();
 
 create index if not exists service_reviews_customer_user_id_idx on public.service_reviews(customer_user_id);
@@ -360,7 +360,7 @@ begin
   end if;
 
   insert into public.service_reviews (appointment_id, customer_id, customer_user_id, service_id, rating, comment, status)
-  values (v_appointment.id, v_customer.id, v_user_id, v_appointment.service_id, p_rating, nullif(trim(p_comment), ''), 'approved')
+  values (v_appointment.id, v_customer.id, v_user_id, v_appointment.service_id, p_rating, nullif(trim(p_comment), ''), 'pending')
   returning * into v_review;
 
   update public.appointments
