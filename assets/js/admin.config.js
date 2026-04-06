@@ -17,7 +17,6 @@ window.ADMIN_CONFIG = {
     inventoryMovements: 'inventory_movements',
     serviceMaterials: 'service_materials',
     reviews: 'service_reviews',
-    reviewRequests: 'review_requests', // legado
     dashboardToday: 'admin_dashboard_today',
     topServices: 'admin_top_services'
   },
@@ -25,5 +24,4 @@ window.ADMIN_CONFIG = {
   businessNameFallback: 'RôSouza Estética',
   currency: 'BRL',
   locale: 'pt-BR',
-  publicReviewPath: 'avaliar.html'
 };

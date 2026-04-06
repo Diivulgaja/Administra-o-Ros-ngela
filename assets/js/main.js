@@ -1,3 +1,4 @@
+console.info('Admin build 20260406e — fluxo de link desativado.');
 window.AdminApp = (() => {
   const sections = ['dashboard', 'agenda', 'clientes', 'servicos', 'profissionais', 'financeiro', 'estoque', 'avaliacoes', 'mensagens', 'marketing', 'configuracoes'];
 
@@ -115,33 +116,6 @@ window.AdminApp = (() => {
     $('#logoutButton')?.addEventListener('click', logout);
   }
 
-  function showFatalError(error) {
-    const panel = document.getElementById('fatalErrorPanel');
-    const title = document.getElementById('fatalErrorTitle');
-    const details = document.getElementById('fatalErrorDetails');
-    const connectionTitle = document.getElementById('connectionTitle');
-    const connectionDescription = document.getElementById('connectionDescription');
-    const connectionBadge = document.getElementById('connectionBadge');
-
-    console.error('Falha fatal no painel:', error);
-
-    if (connectionTitle) connectionTitle.textContent = 'Painel carregado com falha';
-    if (connectionDescription) connectionDescription.textContent = error?.message || 'Erro inesperado ao iniciar o painel.';
-    if (connectionBadge) {
-      connectionBadge.textContent = 'Erro de inicialização';
-      connectionBadge.className = 'px-4 py-2 rounded-full bg-red-50 text-red-600 font-semibold text-sm';
-    }
-
-    if (!panel) return;
-
-    const message = error?.message || 'Erro inesperado ao iniciar o painel.';
-    const stack = String(error?.stack || '').split('\n').slice(0, 8).join('\n');
-
-    if (title) title.textContent = 'O painel encontrou um erro de inicialização';
-    if (details) details.textContent = stack ? `${message}\n\n${stack}` : message;
-    panel.classList.remove('hidden');
-  }
-
   async function init() {
     const statusEl = document.getElementById('bootStatus');
     try {
@@ -155,34 +129,14 @@ window.AdminApp = (() => {
       await loadData();
       document.body.classList.remove('admin-loading');
       if (statusEl) statusEl.remove();
-      sessionStorage.removeItem('rs-admin-last-boot-error');
     } catch (error) {
-      const message = String(error?.message || error || '');
-      const isAuthError = /sessão|permissão|admin|autentic|token|jwt/i.test(message);
-      sessionStorage.setItem('rs-admin-last-boot-error', message);
-      if (isAuthError) {
-        console.error('Falha de autenticação no painel:', error);
-        window.location.replace('./login.html?reason=auth');
-        return;
-      }
-      showFatalError(error);
+      console.error('Falha ao iniciar painel:', error);
+      window.location.replace('./login.html');
     }
   }
 
-  return { init, reloadData, renderSection, showFatalError };
+  return { init, reloadData, renderSection };
 })();
-
-window.addEventListener('error', (event) => {
-  if (window.AdminApp?.showFatalError) {
-    window.AdminApp.showFatalError(event.error || new Error(event.message || 'Erro de runtime'));
-  }
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  if (window.AdminApp?.showFatalError) {
-    window.AdminApp.showFatalError(event.reason || new Error('Promise rejeitada sem tratamento'));
-  }
-});
 
 document.addEventListener('DOMContentLoaded', () => {
   window.AdminApp.init();

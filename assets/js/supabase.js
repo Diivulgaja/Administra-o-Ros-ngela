@@ -36,6 +36,12 @@ window.AdminSupabase = (() => {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
   }
 
+  function randomToken() {
+    const raw = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    return String(raw).replace(/-/g, '');
+  }
+
+  function publicReviewLink() { return null; }
 
   function mapService(row) {
     return {
@@ -199,8 +205,7 @@ window.AdminSupabase = (() => {
       inventoryItems: [],
       inventoryMovements: [],
       serviceMaterials: [],
-      reviews: [],
-      reviewRequests: []
+      reviews: []
     };
     const result = { source: 'supabase', datasets, errors: [] };
     let successCount = 0;
@@ -270,7 +275,6 @@ window.AdminSupabase = (() => {
     if (!reviewsRes.error) { datasets.reviews = (reviewsRes.data || []).map(mapReview); successCount += 1; }
     else result.errors.push(`service_reviews: ${reviewsRes.error.message}`);
 
-
     const dashboardRes = await safeSelect(ADMIN_CONFIG.tables.dashboardToday, (q) => q.select('*').limit(1).maybeSingle());
     if (!dashboardRes.error && dashboardRes.data) { datasets.dashboardToday = dashboardRes.data; successCount += 1; }
 
@@ -335,15 +339,15 @@ window.AdminSupabase = (() => {
     const rpc = await supabase.rpc('release_appointment_review', { p_appointment_id: id });
     if (!rpc.error) return rpc.data;
 
-    const fallback = await supabase
+    const { data, error } = await supabase
       .from(ADMIN_CONFIG.tables.appointments)
       .update({ can_review: true, reviewed_at: null })
       .eq('id', id)
       .select('*')
       .maybeSingle();
 
-    if (fallback.error) throw fallback.error;
-    return fallback.data;
+    if (error) throw error;
+    return data;
   }
 
   async function savePayment(payload) {
@@ -468,6 +472,9 @@ window.AdminSupabase = (() => {
     if (error) throw error;
   }
 
+  async function ensureReviewRequest() { throw new Error('Fluxo de link desativado. Use a liberação da avaliação no perfil da cliente.'); }
+
+  async function markReviewRequestSent() { return null; }
 
   return {
     hasConfig,
