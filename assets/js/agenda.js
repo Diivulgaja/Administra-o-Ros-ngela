@@ -1,6 +1,6 @@
 window.AdminAgenda = (() => {
   const { dateLabel, todayIso, normalize, appointmentStatusLabel, attendanceStatusLabel, paymentStatusLabel } = window.AdminUtils;
-  const { statusPill, emptyState, actionButton } = window.AdminUI;
+  const { statusPill, emptyState, actionButton, notify } = window.AdminUI;
 
   function filterAppointments(list, filter, search) {
     const today = todayIso();
@@ -21,8 +21,10 @@ window.AdminAgenda = (() => {
       await window.AdminSupabase.updateAppointment(id, patch);
       if (after) await after();
       await window.AdminApp.reloadData();
+      return true;
     } catch (error) {
-      alert(error.message || 'Não foi possível atualizar o agendamento.');
+      notify({ title: 'Falha ao atualizar', message: error.message || 'Não foi possível atualizar o agendamento.', variant: 'error' });
+      return false;
     }
   }
 
@@ -30,8 +32,9 @@ window.AdminAgenda = (() => {
     try {
       await window.AdminSupabase.concludeAppointment(id);
       await window.AdminApp.reloadData();
+      notify({ title: 'Atendimento concluído', message: 'A avaliação já ficou pronta para ser liberada no perfil da cliente.', variant: 'success' });
     } catch (error) {
-      alert(error.message || 'Não foi possível concluir o atendimento.');
+      notify({ title: 'Falha ao concluir', message: error.message || 'Não foi possível concluir o atendimento.', variant: 'error' });
     }
   }
 
@@ -39,8 +42,9 @@ window.AdminAgenda = (() => {
     try {
       await window.AdminSupabase.releaseAppointmentReview(id);
       await window.AdminApp.reloadData();
+      notify({ title: 'Avaliação liberada', message: 'A cliente já pode avaliar diretamente no perfil dela.', variant: 'success' });
     } catch (error) {
-      alert(error.message || 'Não foi possível liberar a avaliação para a cliente.');
+      notify({ title: 'Falha ao liberar', message: error.message || 'Não foi possível liberar a avaliação para a cliente.', variant: 'error' });
     }
   }
 
@@ -111,7 +115,7 @@ window.AdminAgenda = (() => {
     });
 
     root.querySelectorAll('[data-action="confirm"]').forEach((button) => {
-      button.addEventListener('click', () => runAction(button.dataset.id, { status: 'confirmed', confirmed_at: new Date().toISOString() }));
+      button.addEventListener('click', async () => { const ok = await runAction(button.dataset.id, { status: 'confirmed', confirmed_at: new Date().toISOString() }); if (ok) notify({ title: 'Reserva confirmada', message: 'O agendamento foi atualizado com sucesso.', variant: 'success' }); });
     });
 
     root.querySelectorAll('[data-action="complete"]').forEach((button) => {
@@ -119,7 +123,7 @@ window.AdminAgenda = (() => {
     });
 
     root.querySelectorAll('[data-action="cancel"]').forEach((button) => {
-      button.addEventListener('click', () => runAction(button.dataset.id, { status: 'cancelled', attendance_status: 'cancelled', cancelled_at: new Date().toISOString() }));
+      button.addEventListener('click', async () => { const ok = await runAction(button.dataset.id, { status: 'cancelled', attendance_status: 'cancelled', cancelled_at: new Date().toISOString() }); if (ok) notify({ title: 'Agendamento cancelado', message: 'O status foi atualizado no painel.', variant: 'success' }); });
     });
 
     root.querySelectorAll('[data-action="release-review"]').forEach((button) => {

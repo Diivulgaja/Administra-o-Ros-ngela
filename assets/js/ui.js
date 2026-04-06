@@ -1,5 +1,48 @@
 window.AdminUI = (() => {
   const { initials, statusClass, escapeHtml } = window.AdminUtils;
+  let toastContainer = null;
+
+  function ensureToastContainer() {
+    if (toastContainer && document.body.contains(toastContainer)) return toastContainer;
+    toastContainer = document.getElementById('admin-toast-root');
+    if (toastContainer) return toastContainer;
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'admin-toast-root';
+    toastContainer.className = 'admin-toast-root';
+    document.body.appendChild(toastContainer);
+    return toastContainer;
+  }
+
+  function notify({ title = '', message = '', variant = 'info', duration = 4200 } = {}) {
+    const root = ensureToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `admin-toast admin-toast--${variant}`;
+    toast.innerHTML = `
+      <div class="admin-toast__icon">${variant === 'success' ? '✓' : variant === 'error' ? '!' : 'i'}</div>
+      <div class="admin-toast__content">
+        ${title ? `<p class="admin-toast__title">${escapeHtml(title)}</p>` : ''}
+        <p class="admin-toast__message">${escapeHtml(message || title || 'Atualização realizada.')}</p>
+      </div>
+      <button type="button" class="admin-toast__close" aria-label="Fechar notificação">×</button>
+    `;
+    root.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('is-visible'));
+
+    const remove = () => {
+      toast.classList.remove('is-visible');
+      toast.classList.add('is-leaving');
+      window.setTimeout(() => toast.remove(), 220);
+    };
+
+    toast.querySelector('.admin-toast__close')?.addEventListener('click', remove);
+    window.setTimeout(remove, duration);
+    return toast;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => ensureToastContainer(), { once: true });
+    window.alert = (message) => notify({ title: 'Atenção', message: String(message || ''), variant: 'error', duration: 5200 });
+  }
 
   function panelTitle(eyebrow, title, extra = '') {
     return `
@@ -62,5 +105,5 @@ window.AdminUI = (() => {
     return `<label class="field-block"><span class="field-label">${escapeHtml(label)}</span>${input}</label>`;
   }
 
-  return { panelTitle, metricCard, statusPill, emptyState, personChip, actionButton, field };
+  return { panelTitle, metricCard, statusPill, emptyState, personChip, actionButton, field, notify };
 })();

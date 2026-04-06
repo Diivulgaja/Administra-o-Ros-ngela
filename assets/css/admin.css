@@ -85,3 +85,99 @@ textarea.input-base {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+.admin-toast-root {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 120;
+  display: grid;
+  gap: .85rem;
+  width: min(360px, calc(100vw - 1.5rem));
+}
+.admin-toast {
+  display: grid;
+  grid-template-columns: 2.8rem 1fr auto;
+  gap: .9rem;
+  align-items: start;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid #E9D7D7;
+  background: rgba(255,255,255,.98);
+  box-shadow: 0 20px 48px rgba(28, 23, 23, 0.18);
+  transform: translateY(-8px) scale(.98);
+  opacity: 0;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.admin-toast.is-visible {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.admin-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(-10px) scale(.98);
+}
+.admin-toast--success {
+  border-color: rgba(16, 185, 129, .2);
+  background: linear-gradient(180deg, rgba(240,253,248,.98), rgba(255,255,255,.98));
+}
+.admin-toast--error {
+  border-color: rgba(248, 113, 113, .28);
+  background: linear-gradient(180deg, rgba(254,242,242,.98), rgba(255,255,255,.98));
+}
+.admin-toast--info {
+  border-color: rgba(215, 134, 134, .22);
+}
+.admin-toast__icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: .95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  background: #FCF8F8;
+  color: #8E5F5F;
+}
+.admin-toast--success .admin-toast__icon {
+  background: #ecfdf5;
+  color: #059669;
+}
+.admin-toast--error .admin-toast__icon {
+  background: #fef2f2;
+  color: #b42318;
+}
+.admin-toast__title {
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #8E5F5F;
+  margin: .12rem 0 .2rem;
+}
+.admin-toast__message {
+  font-size: .93rem;
+  line-height: 1.5;
+  color: #2A2323;
+}
+.admin-toast__close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid #E9D7D7;
+  color: #8E5F5F;
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
+}
+@media (max-width: 767px) {
+  .admin-toast-root {
+    top: auto;
+    bottom: 1rem;
+    right: .75rem;
+    left: .75rem;
+    width: auto;
+  }
+}
