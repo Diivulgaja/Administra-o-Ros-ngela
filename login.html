@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Admin | RôSouza Estética</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            blush: '#D78686', roseSoft: '#F6E8E8', roseLine: '#E9D7D7', ink: '#1C1717', sidebar: '#161212'
+          },
+          fontFamily: { display: ['Playfair Display', 'serif'], sans: ['Inter', 'sans-serif'] },
+          backgroundImage: {
+            hero: 'radial-gradient(circle at top left, rgba(215,134,134,0.22), transparent 35%), linear-gradient(135deg, #1C1717 0%, #2B2424 40%, #4A3D3D 100%)'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-[#F8F5F4] text-ink font-sans">
+  <div class="min-h-screen grid lg:grid-cols-2">
+    <section class="hidden lg:flex bg-hero text-white p-10 items-center">
+      <div class="max-w-xl">
+        <p class="text-xs uppercase tracking-[0.2em] text-white/60">RôSouza Estética</p>
+        <h1 class="mt-4 font-display text-6xl leading-tight">Painel administrativo com login real.</h1>
+        <p class="mt-5 text-white/75 text-lg">Entre com sua conta do Supabase Auth. O painel só libera acesso para usuários presentes na tabela <strong>admin_users</strong> e ativos.</p>
+      </div>
+    </section>
+    <section class="flex items-center justify-center p-6 md:p-10">
+      <div class="w-full max-w-md rounded-[32px] bg-white border border-roseLine shadow-xl p-8">
+        <div class="mb-8">
+          <p class="text-sm uppercase tracking-[0.18em] text-slate-500 font-semibold">Acesso restrito</p>
+          <h2 class="mt-2 text-3xl font-bold">Entrar no admin</h2>
+          <p class="mt-2 text-sm text-slate-500">Use o mesmo email e senha cadastrados no Supabase Auth.</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label for="email" class="block text-sm font-medium mb-2">E-mail</label>
+            <input id="email" type="email" required class="w-full rounded-2xl border border-roseLine bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blush/30" placeholder="admin@seudominio.com">
+          </div>
+          <div>
+            <label for="password" class="block text-sm font-medium mb-2">Senha</label>
+            <input id="password" type="password" required class="w-full rounded-2xl border border-roseLine bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blush/30" placeholder="Sua senha">
+          </div>
+          <button id="loginButton" type="submit" class="w-full rounded-2xl bg-blush text-white py-3 font-semibold">Entrar</button>
+          <p id="loginError" class="hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"></p>
+          <p id="loginStatus" class="text-sm text-slate-500"></p>
+          <pre id="loginDebug" class="hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 whitespace-pre-wrap"></pre>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="./app.config.js?v=20260406d"></script>
+  <script src="./assets/js/supabase.js?v=20260406d"></script>
+  <script src="./assets/js/auth.js?v=20260406d"></script>
+  <script src="./assets/js/login-page.js?v=20260406d"></script>
+</body>
+</html>

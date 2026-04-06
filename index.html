@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Administrativo | RôSouza Estética</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            blush: '#D78686', roseSoft: '#F6E8E8', roseLine: '#E9D7D7', ink: '#1C1717',
+            card: '#FFFFFF', muted: '#7C6F6F', sidebar: '#161212', goldSoft: '#F3C96A'
+          },
+          fontFamily: { display: ['Playfair Display', 'serif'], sans: ['Inter', 'sans-serif'] },
+          boxShadow: {
+            soft: '0 10px 35px rgba(28, 23, 23, 0.08)',
+            glow: '0 12px 40px rgba(215, 134, 134, 0.18)'
+          },
+          backgroundImage: {
+            hero: 'radial-gradient(circle at top left, rgba(215,134,134,0.22), transparent 35%), linear-gradient(135deg, #1C1717 0%, #2B2424 40%, #4A3D3D 100%)'
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="./assets/css/admin.css?v=20260406-reviewfix" />
+</head>
+<body class="bg-[#F8F5F4] text-ink font-sans">
+  <div class="min-h-screen flex">
+    <div id="mobileOverlay" class="fixed inset-0 bg-black/30 z-40 hidden xl:hidden"></div>
+
+    <aside id="sidebar" class="fixed xl:static inset-y-0 left-0 z-50 w-72 bg-sidebar text-white flex flex-col border-r border-white/10 transform -translate-x-full xl:translate-x-0 transition-transform duration-300">
+      <div class="px-6 py-6 border-b border-white/10">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shadow-soft">
+            <span class="font-display text-xl">Rô</span>
+          </div>
+          <div>
+            <p class="font-semibold tracking-wide">RôSouza Estética</p>
+            <p class="text-xs text-white/60">Painel administrativo</p>
+          </div>
+        </div>
+      </div>
+
+      <nav id="sidebarNav" class="px-4 py-5 space-y-2 text-sm flex-1 overflow-y-auto">
+        <button data-section="dashboard" class="nav-link is-active w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard geral
+        </button>
+        <button data-section="agenda" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="calendar-days" class="w-5 h-5"></i> Agenda e reservas
+        </button>
+        <button data-section="clientes" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="users" class="w-5 h-5"></i> Clientes
+        </button>
+        <button data-section="servicos" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="briefcase-medical" class="w-5 h-5"></i> Serviços
+        </button>
+        <button data-section="profissionais" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="badge-check" class="w-5 h-5"></i> Profissionais
+        </button>
+        <button data-section="financeiro" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="wallet-cards" class="w-5 h-5"></i> Financeiro
+        </button>
+        <button data-section="estoque" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="package" class="w-5 h-5"></i> Estoque
+        </button>
+        <button data-section="avaliacoes" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="star" class="w-5 h-5"></i> Avaliações
+        </button>
+        <button data-section="mensagens" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="message-circle-more" class="w-5 h-5"></i> WhatsApp e contatos
+        </button>
+        <button data-section="marketing" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="megaphone" class="w-5 h-5"></i> Marketing
+        </button>
+        <button data-section="configuracoes" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition">
+          <i data-lucide="settings" class="w-5 h-5"></i> Configurações
+        </button>
+      </nav>
+
+      <div class="p-4 border-t border-white/10">
+        <div class="rounded-3xl bg-white/8 border border-white/10 p-4">
+          <p class="text-xs uppercase tracking-[0.2em] text-white/50 mb-2">Resumo do dia</p>
+          <p id="sidebarAppointmentsToday" class="text-3xl font-bold">0</p>
+          <p class="text-sm text-white/70 mt-1">agendamentos previstos</p>
+          <div class="mt-4 flex items-center justify-between text-xs text-white/60">
+            <span>Taxa de ocupação</span>
+            <span id="sidebarOccupancyText">0%</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-white/10 mt-2 overflow-hidden">
+            <div id="sidebarOccupancyBar" class="h-full w-0 bg-blush rounded-full transition-all duration-500"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0 xl:ml-0">
+      <header class="sticky top-0 z-30 bg-[#F8F5F4]/90 backdrop-blur border-b border-roseLine">
+        <div class="px-4 md:px-8 py-4 flex items-center gap-4 justify-between">
+          <div class="flex items-center gap-3 w-full max-w-xl">
+            <button id="mobileMenuButton" class="xl:hidden w-11 h-11 rounded-2xl border border-roseLine bg-white flex items-center justify-center">
+              <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted"></i>
+              <input id="globalSearchInput" type="text" placeholder="Buscar cliente, horário, serviço ou profissional" class="w-full pl-11 pr-4 py-3 rounded-2xl border border-roseLine bg-white outline-none focus:ring-2 focus:ring-blush/30" />
+            </div>
+          </div>
+
+          <div class="hidden md:flex items-center gap-3">
+            <button id="syncButton" class="px-4 py-3 rounded-2xl bg-white border border-roseLine font-medium flex items-center gap-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar dados
+            </button>
+            <button id="newAppointmentButton" class="px-4 py-3 rounded-2xl bg-blush text-white font-semibold shadow-glow flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i> Novo agendamento
+            </button>
+            <button class="relative w-11 h-11 rounded-2xl bg-white border border-roseLine flex items-center justify-center">
+              <i data-lucide="bell" class="w-5 h-5"></i>
+              <span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            </button>
+            <div class="flex items-center gap-3 bg-white border border-roseLine rounded-2xl px-3 py-2">
+              <div id="adminInitials" class="w-10 h-10 rounded-xl bg-hero flex items-center justify-center text-white font-bold">AD</div>
+              <div>
+                <p id="adminName" class="text-sm font-semibold">Administrador</p>
+                <p id="adminRole" class="text-xs text-muted">admin</p>
+              </div>
+            </div>
+            <button id="logoutButton" class="px-4 py-3 rounded-2xl bg-white border border-roseLine font-medium flex items-center gap-2">
+              <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="px-4 md:px-8 py-6 space-y-6">
+        <section id="connectionStatus" class="rounded-3xl border border-roseLine bg-white p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-soft">
+          <div>
+            <p class="text-xs uppercase tracking-[0.16em] text-muted font-semibold">Conexão</p>
+            <h2 id="connectionTitle" class="text-xl font-bold mt-1">Verificando integração...</h2>
+            <p id="connectionDescription" class="text-sm text-muted mt-1">O painel está carregando a configuração e preparando os módulos.</p>
+          </div>
+          <span id="connectionBadge" class="px-4 py-2 rounded-full bg-[#F5EBEB] text-[#8E5F5F] font-semibold text-sm">Inicializando</span>
+        </section>
+
+
+
+        <section id="fatalErrorPanel" class="hidden rounded-3xl border border-red-200 bg-red-50 p-5 shadow-soft">
+          <p class="text-xs uppercase tracking-[0.16em] text-red-600 font-semibold">Diagnóstico</p>
+          <h2 id="fatalErrorTitle" class="text-xl font-bold mt-1 text-red-800">Erro ao carregar o painel</h2>
+          <p class="text-sm text-red-700 mt-2">A autenticação foi mantida, mas o painel parou nesta tela para evitar o efeito de piscando entre login e painel.</p>
+          <pre id="fatalErrorDetails" class="mt-4 whitespace-pre-wrap break-words rounded-2xl bg-white border border-red-100 p-4 text-xs text-red-900 overflow-auto max-h-72"></pre>
+        </section>
+
+        <section id="dashboard" class="section-panel active space-y-6"></section>
+        <section id="agenda" class="section-panel space-y-6"></section>
+        <section id="clientes" class="section-panel space-y-6"></section>
+        <section id="servicos" class="section-panel space-y-6"></section>
+        <section id="profissionais" class="section-panel space-y-6"></section>
+        <section id="financeiro" class="section-panel space-y-6"></section>
+        <section id="estoque" class="section-panel space-y-6"></section>
+        <section id="avaliacoes" class="section-panel space-y-6"></section>
+        <section id="mensagens" class="section-panel space-y-6"></section>
+        <section id="marketing" class="section-panel space-y-6"></section>
+        <section id="configuracoes" class="section-panel space-y-6"></section>
+      </div>
+    </main>
+  </div>
+
+  <script src="./app.config.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/admin.config.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/mock-data.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/utils.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/state.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/supabase.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/auth.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/ui.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/dashboard.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/agenda.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/clientes.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/servicos.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/profissionais.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/financeiro.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/estoque.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/avaliacoes.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/mensagens.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/marketing.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/configuracoes.js?v=20260406-reviewfix"></script>
+  <script src="./assets/js/main.js?v=20260406-reviewfix"></script>
+</body>
+</html>
