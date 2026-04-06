@@ -268,10 +268,16 @@ window.AdminSupabase = (() => {
     if (!serviceMaterialsRes.error) { datasets.serviceMaterials = serviceMaterialsRes.data || []; successCount += 1; }
     else result.errors.push(`service_materials: ${serviceMaterialsRes.error.message}`);
 
-    const reviewsRes = await safeSelect(
+    let reviewsRes = await safeSelect(
       ADMIN_CONFIG.tables.reviews,
       (q) => q.select('id, appointment_id, customer_id, service_id, rating, comment, status, created_at, admin_reply, replied_at, is_featured, customers(full_name), services(title)').order('created_at', { ascending: false })
     );
+    if (reviewsRes.error) {
+      reviewsRes = await safeSelect(
+        ADMIN_CONFIG.tables.reviews,
+        (q) => q.select('*').order('created_at', { ascending: false })
+      );
+    }
     if (!reviewsRes.error) { datasets.reviews = (reviewsRes.data || []).map(mapReview); successCount += 1; }
     else result.errors.push(`service_reviews: ${reviewsRes.error.message}`);
 
@@ -303,31 +309,54 @@ window.AdminSupabase = (() => {
     if (error) throw error;
   }
 
+  async function tryRpcSequence(calls) {
+    let lastError = null;
+
+    for (const call of calls) {
+      const { fn, payload } = call;
+      const response = await getClient().rpc(fn, payload);
+      if (!response.error) return response.data;
+      lastError = response.error;
+
+      const message = String(response.error?.message || '').toLowerCase();
+      const isMissing = message.includes('function') || message.includes('does not exist') || message.includes('schema cache');
+      if (!isMissing) break;
+    }
+
+    if (lastError) throw lastError;
+    return null;
+  }
+
   async function concludeAppointment(id) {
     const supabase = getClient();
     if (!isUuid(id)) {
       throw new Error('Este item ainda não é um agendamento real do banco.');
     }
 
-    const rpc = await supabase.rpc('mark_appointment_completed_and_enable_review', { p_appointment_id: id });
-    if (!rpc.error) return rpc.data;
-
     const timestamp = new Date().toISOString();
-    const fallback = await supabase
-      .from(ADMIN_CONFIG.tables.appointments)
-      .update({
-        attendance_status: 'completed',
-        can_review: true,
-        reviewed_at: null,
-        status: 'confirmed',
-        confirmed_at: timestamp
-      })
-      .eq('id', id)
-      .select('*')
-      .maybeSingle();
 
-    if (fallback.error) throw fallback.error;
-    return fallback.data;
+    try {
+      return await tryRpcSequence([
+        { fn: 'complete_appointment_without_releasing_review', payload: { p_appointment_id: id } },
+        { fn: 'mark_appointment_completed_and_enable_review', payload: { p_appointment_id: id } }
+      ]);
+    } catch (_rpcError) {
+      const fallback = await supabase
+        .from(ADMIN_CONFIG.tables.appointments)
+        .update({
+          attendance_status: 'completed',
+          can_review: false,
+          reviewed_at: null,
+          status: 'confirmed',
+          confirmed_at: timestamp
+        })
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
+
+      if (fallback.error) throw fallback.error;
+      return fallback.data;
+    }
   }
 
   async function releaseAppointmentReview(id) {
@@ -336,18 +365,27 @@ window.AdminSupabase = (() => {
       throw new Error('Este item ainda não é um agendamento real do banco.');
     }
 
-    const rpc = await supabase.rpc('release_appointment_review', { p_appointment_id: id });
-    if (!rpc.error) return rpc.data;
+    try {
+      return await tryRpcSequence([
+        { fn: 'release_appointment_review_for_customer', payload: { p_appointment_id: id } },
+        { fn: 'release_appointment_review', payload: { p_appointment_id: id } }
+      ]);
+    } catch (_rpcError) {
+      const { data, error } = await supabase
+        .from(ADMIN_CONFIG.tables.appointments)
+        .update({
+          attendance_status: 'completed',
+          status: 'confirmed',
+          can_review: true,
+          reviewed_at: null
+        })
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
 
-    const { data, error } = await supabase
-      .from(ADMIN_CONFIG.tables.appointments)
-      .update({ can_review: true, reviewed_at: null })
-      .eq('id', id)
-      .select('*')
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }
   }
 
   async function savePayment(payload) {
