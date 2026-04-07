@@ -20,11 +20,11 @@ window.AdminUtils = (() => {
 
   const statusClass = (status = '') => {
     const key = normalize(status);
-    if (key.includes('confirm') || key.includes('approved') || key.includes('aprov')) return 'status-confirmado';
+    if (key.includes('confirm')) return 'status-confirmado';
     if (key.includes('pend') || key.includes('aguard')) return 'status-aguardando';
     if (key.includes('expir')) return 'status-pre-reserva';
-    if (key.includes('cancel') || key.includes('hidden') || key.includes('ocult') || key.includes('reprov')) return 'status-cancelado';
-    if (key.includes('attend') || key.includes('concl') || key.includes('destaq') || key.includes('reply') || key.includes('respond')) return 'status-concluido';
+    if (key.includes('cancel')) return 'status-cancelado';
+    if (key.includes('attend') || key.includes('concl')) return 'status-concluido';
     return 'status-pre-reserva';
   };
 

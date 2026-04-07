@@ -3,15 +3,7 @@ begin;
 alter table public.service_reviews
   add column if not exists admin_reply text,
   add column if not exists replied_at timestamptz,
-  add column if not exists is_featured boolean not null default false,
-  add column if not exists status text not null default 'pending';
-
-alter table public.service_reviews
-  drop constraint if exists service_reviews_status_check;
-
-alter table public.service_reviews
-  add constraint service_reviews_status_check
-  check (status in ('pending', 'approved', 'hidden'));
+  add column if not exists is_featured boolean not null default false;
 
 create or replace function public.link_my_appointments_by_phone(
   p_phone text

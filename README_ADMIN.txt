@@ -43,3 +43,7 @@ NOVO FLUXO DE AVALIAÇÕES
 - Rode também sql/customer_auth_reviews_upgrade.sql
 - O painel agora libera a avaliação ao concluir o atendimento
 - A cliente entra no site principal com Google e avalia pela própria área logada
+
+
+Correção desta versão
+- Rode sql/customer_reviews_site_admin_fix_v5.sql no Supabase para alinhar as avaliações do painel com o site principal.

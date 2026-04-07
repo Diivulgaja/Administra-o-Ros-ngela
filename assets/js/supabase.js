@@ -153,15 +153,33 @@ window.AdminSupabase = (() => {
       rating: Number(row.rating || 0),
       title: row.title || '',
       comment: row.comment || '',
-      status: row.status || 'approved',
+      status: row.status || 'pending',
       is_featured: Boolean(row.is_featured),
-      public_name: row.public_name || row.customers?.full_name || 'Cliente',
-      admin_reply: row.admin_reply || '',
+      public_name: row.public_name || row.customer_name || row.customers?.full_name || 'Cliente',
+      admin_reply: row.admin_reply || row.reply || '',
       replied_at: row.replied_at || null,
       created_at: row.created_at,
-      customer_name: row.customers?.full_name || row.public_name || 'Cliente',
-      service_title: row.services?.title || ''
+      customer_name: row.customer_name || row.customers?.full_name || row.public_name || 'Cliente',
+      service_title: row.service_title || row.services?.title || ''
     };
+  }
+
+  async function loadReviewsDataset(supabase) {
+    const candidates = [ADMIN_CONFIG.tables.reviews, 'reviews'].filter(Boolean);
+    const seen = new Set();
+
+    for (const table of candidates) {
+      if (seen.has(table)) continue;
+      seen.add(table);
+
+      const response = await safeSelect(table, (q) => q.select('*').order('created_at', { ascending: false }));
+      if (!response.error) {
+        return { data: (response.data || []).map(mapReview), error: null, table };
+      }
+    }
+
+    const fallback = await safeSelect(ADMIN_CONFIG.tables.reviews, (q) => q.select('id, appointment_id, customer_id, service_id, rating, comment, status, created_at').order('created_at', { ascending: false }));
+    return { data: fallback.data || [], error: fallback.error || null, table: ADMIN_CONFIG.tables.reviews };
   }
 
   async function safeSelect(table, queryBuilder) {
@@ -268,12 +286,9 @@ window.AdminSupabase = (() => {
     if (!serviceMaterialsRes.error) { datasets.serviceMaterials = serviceMaterialsRes.data || []; successCount += 1; }
     else result.errors.push(`service_materials: ${serviceMaterialsRes.error.message}`);
 
-    const reviewsRes = await safeSelect(
-      ADMIN_CONFIG.tables.reviews,
-      (q) => q.select('id, appointment_id, customer_id, service_id, rating, comment, status, created_at, admin_reply, replied_at, is_featured, customers(full_name), services(title)').order('created_at', { ascending: false })
-    );
-    if (!reviewsRes.error) { datasets.reviews = (reviewsRes.data || []).map(mapReview); successCount += 1; }
-    else result.errors.push(`service_reviews: ${reviewsRes.error.message}`);
+    const reviewsRes = await loadReviewsDataset(supabase);
+    if (!reviewsRes.error) { datasets.reviews = reviewsRes.data || []; successCount += 1; }
+    else result.errors.push(`reviews: ${reviewsRes.error.message}`);
 
     const dashboardRes = await safeSelect(ADMIN_CONFIG.tables.dashboardToday, (q) => q.select('*').limit(1).maybeSingle());
     if (!dashboardRes.error && dashboardRes.data) { datasets.dashboardToday = dashboardRes.data; successCount += 1; }
@@ -468,8 +483,20 @@ window.AdminSupabase = (() => {
 
   async function saveReviewModeration(id, patch) {
     const supabase = getClient();
-    const { error } = await supabase.from(ADMIN_CONFIG.tables.reviews).update(patch).eq('id', id);
-    if (error) throw error;
+    const candidates = [ADMIN_CONFIG.tables.reviews, 'reviews'].filter(Boolean);
+    let lastError = null;
+    const seen = new Set();
+
+    for (const table of candidates) {
+      if (seen.has(table)) continue;
+      seen.add(table);
+
+      const { error } = await supabase.from(table).update(patch).eq('id', id);
+      if (!error) return;
+      lastError = error;
+    }
+
+    throw lastError || new Error('Não foi possível atualizar a avaliação.');
   }
 
   async function ensureReviewRequest() { throw new Error('Fluxo de link desativado. Use a liberação da avaliação no perfil da cliente.'); }
