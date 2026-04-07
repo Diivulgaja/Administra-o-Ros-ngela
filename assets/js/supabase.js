@@ -164,6 +164,35 @@ window.AdminSupabase = (() => {
     };
   }
 
+  async function safeSelect(table, queryBuilder) {
+    const supabase = getClient();
+    if (!supabase) {
+      return { data: null, error: new Error('Cliente Supabase indisponível.') };
+    }
+    if (!table) {
+      return { data: null, error: new Error('Tabela não configurada.') };
+    }
+
+    try {
+      const base = supabase.from(table);
+      return await queryBuilder(base);
+    } catch (error) {
+      return { data: null, error };
+    }
+  }
+
+  async function getCurrentSessionUserId() {
+    const supabase = getClient();
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) return null;
+      return data?.session?.user?.id || null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
   async function loadReviewsIntoDatasets(datasets, result) {
     let response = await safeSelect(
       ADMIN_CONFIG.tables.reviews,
