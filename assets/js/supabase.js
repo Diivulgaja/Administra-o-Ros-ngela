@@ -194,6 +194,64 @@ window.AdminSupabase = (() => {
     return data?.session?.user?.id || null;
   }
 
+  async function loadReviewsDataset(datasets, result) {
+    let response = await safeSelect(
+      ADMIN_CONFIG.tables.reviews,
+      (q) => q.select('id, appointment_id, customer_id, service_id, rating, title, comment, status, created_at, admin_reply, replied_at, is_featured, public_name, customers(full_name), services(title)').order('created_at', { ascending: false })
+    );
+
+    if (response.error) {
+      result.errors.push(`service_reviews(join): ${response.error.message}`);
+      response = await safeSelect(
+        ADMIN_CONFIG.tables.reviews,
+        (q) => q.select('*').order('created_at', { ascending: false })
+      );
+    }
+
+    if (!response.error) {
+      datasets.reviews = (response.data || []).map((row) => {
+        const mapped = mapReview(row);
+        const appt = datasets.appointments.find((item) => String(item.id) === String(mapped.appointment_id));
+        return {
+          ...mapped,
+          customer_name: mapped.customer_name || appt?.customer_name || 'Cliente',
+          service_title: mapped.service_title || appt?.service_name || ''
+        };
+      });
+      return true;
+    }
+
+    result.errors.push(`service_reviews: ${response.error.message}`);
+
+    const legacy = await safeSelect('reviews', (q) => q.select('*').order('created_at', { ascending: false }));
+    if (!legacy.error) {
+      datasets.reviews = (legacy.data || []).map((row) => {
+        const appt = datasets.appointments.find((item) => String(item.id) === String(row.appointment_id));
+        return {
+          id: row.id,
+          appointment_id: row.appointment_id,
+          customer_id: row.customer_id,
+          service_id: row.service_id,
+          rating: Number(row.rating || 0),
+          title: row.title || '',
+          comment: row.comment || '',
+          status: row.status || 'pending',
+          is_featured: Boolean(row.is_featured),
+          public_name: row.public_name || appt?.customer_name || 'Cliente',
+          admin_reply: row.admin_reply || '',
+          replied_at: row.replied_at || null,
+          created_at: row.created_at,
+          customer_name: row.public_name || appt?.customer_name || 'Cliente',
+          service_title: appt?.service_name || ''
+        };
+      });
+      return true;
+    }
+
+    result.errors.push(`reviews: ${legacy.error.message}`);
+    return false;
+  }
+
   async function loadDatasets() {
     const mock = window.ADMIN_MOCK_DATA;
     if (!hasConfig()) {
