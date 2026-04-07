@@ -1,0 +1,32 @@
+{
+  "name": "RôSouza Admin",
+  "short_name": "Admin Rô",
+  "description": "Painel administrativo da clínica RôSouza Estética.",
+  "start_url": "./login.html?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f5f4",
+  "theme_color": "#1c1717",
+  "lang": "pt-BR",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
