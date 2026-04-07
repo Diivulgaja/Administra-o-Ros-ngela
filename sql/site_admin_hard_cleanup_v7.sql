@@ -68,6 +68,9 @@ create trigger trg_appointments_set_updated_at
 before update on public.appointments
 for each row execute function public.set_updated_at();
 
+alter table if exists public.appointments
+  alter column id set default gen_random_uuid();
+
 alter table if exists public.service_reviews
   add column if not exists title text,
   add column if not exists public_name text,
@@ -82,6 +85,9 @@ drop trigger if exists trg_service_reviews_set_updated_at on public.service_revi
 create trigger trg_service_reviews_set_updated_at
 before update on public.service_reviews
 for each row execute function public.set_updated_at();
+
+alter table if exists public.service_reviews
+  alter column id set default gen_random_uuid();
 
 do $$
 declare
@@ -514,6 +520,7 @@ begin
   limit 1;
 
   v_payload := jsonb_strip_nulls(jsonb_build_object(
+    'id', to_jsonb(gen_random_uuid()),
     'booking_reference', v_booking_reference,
     'booking_date', p_booking_date,
     'start_at', v_start_at,
