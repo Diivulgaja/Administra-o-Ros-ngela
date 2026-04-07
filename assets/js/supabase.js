@@ -384,7 +384,7 @@ window.AdminSupabase = (() => {
     const direct = await supabase
       .from(ADMIN_CONFIG.tables.appointments)
       .update({
-        attendance_status: 'completed',
+        attendance_status: 'attended',
         can_review: false,
         reviewed_at: null,
         status: 'confirmed',
@@ -399,7 +399,22 @@ window.AdminSupabase = (() => {
     const rpc = await supabase.rpc('complete_appointment_without_releasing_review', { p_appointment_id: id });
     if (!rpc.error) return rpc.data;
 
-    throw direct.error || rpc.error;
+    const legacy = await supabase
+      .from(ADMIN_CONFIG.tables.appointments)
+      .update({
+        attendance_status: 'completed',
+        can_review: false,
+        reviewed_at: null,
+        status: 'confirmed',
+        confirmed_at: timestamp
+      })
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+
+    if (!legacy.error) return legacy.data;
+
+    throw direct.error || rpc.error || legacy.error;
   }
 
   async function releaseAppointmentReview(id) {
@@ -412,7 +427,7 @@ window.AdminSupabase = (() => {
     const direct = await supabase
       .from(ADMIN_CONFIG.tables.appointments)
       .update({
-        attendance_status: 'completed',
+        attendance_status: 'attended',
         can_review: true,
         reviewed_at: null,
         status: 'confirmed',
@@ -427,7 +442,22 @@ window.AdminSupabase = (() => {
     const rpc = await supabase.rpc('release_appointment_review', { p_appointment_id: id });
     if (!rpc.error) return rpc.data;
 
-    throw direct.error || rpc.error;
+    const legacy = await supabase
+      .from(ADMIN_CONFIG.tables.appointments)
+      .update({
+        attendance_status: 'completed',
+        can_review: true,
+        reviewed_at: null,
+        status: 'confirmed',
+        confirmed_at: timestamp
+      })
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+
+    if (!legacy.error) return legacy.data;
+
+    throw direct.error || rpc.error || legacy.error;
   }
 
   async function savePayment(payload) {
