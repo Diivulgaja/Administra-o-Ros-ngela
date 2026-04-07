@@ -164,37 +164,7 @@ window.AdminSupabase = (() => {
     };
   }
 
-  async function loadReviewsDataset(supabase) {
-    const candidates = [ADMIN_CONFIG.tables.reviews, 'reviews'].filter(Boolean);
-    const seen = new Set();
-
-    for (const table of candidates) {
-      if (seen.has(table)) continue;
-      seen.add(table);
-
-      const response = await safeSelect(table, (q) => q.select('*').order('created_at', { ascending: false }));
-      if (!response.error) {
-        return { data: (response.data || []).map(mapReview), error: null, table };
-      }
-    }
-
-    const fallback = await safeSelect(ADMIN_CONFIG.tables.reviews, (q) => q.select('id, appointment_id, customer_id, service_id, rating, comment, status, created_at').order('created_at', { ascending: false }));
-    return { data: fallback.data || [], error: fallback.error || null, table: ADMIN_CONFIG.tables.reviews };
-  }
-
-  async function safeSelect(table, queryBuilder) {
-    const supabase = getClient();
-    const base = supabase.from(table);
-    return queryBuilder(base);
-  }
-
-  async function getCurrentSessionUserId() {
-    const supabase = getClient();
-    const { data } = await supabase.auth.getSession();
-    return data?.session?.user?.id || null;
-  }
-
-  async function loadReviewsDataset(datasets, result) {
+  async function loadReviewsIntoDatasets(datasets, result) {
     let response = await safeSelect(
       ADMIN_CONFIG.tables.reviews,
       (q) => q.select('id, appointment_id, customer_id, service_id, rating, title, comment, status, created_at, admin_reply, replied_at, is_featured, public_name, customers(full_name), services(title)').order('created_at', { ascending: false })
@@ -211,7 +181,7 @@ window.AdminSupabase = (() => {
     if (!response.error) {
       datasets.reviews = (response.data || []).map((row) => {
         const mapped = mapReview(row);
-        const appt = datasets.appointments.find((item) => String(item.id) === String(mapped.appointment_id));
+        const appt = (datasets.appointments || []).find((item) => String(item.id) === String(mapped.appointment_id));
         return {
           ...mapped,
           customer_name: mapped.customer_name || appt?.customer_name || 'Cliente',
@@ -226,7 +196,7 @@ window.AdminSupabase = (() => {
     const legacy = await safeSelect('reviews', (q) => q.select('*').order('created_at', { ascending: false }));
     if (!legacy.error) {
       datasets.reviews = (legacy.data || []).map((row) => {
-        const appt = datasets.appointments.find((item) => String(item.id) === String(row.appointment_id));
+        const appt = (datasets.appointments || []).find((item) => String(item.id) === String(row.appointment_id));
         return {
           id: row.id,
           appointment_id: row.appointment_id,
@@ -344,9 +314,8 @@ window.AdminSupabase = (() => {
     if (!serviceMaterialsRes.error) { datasets.serviceMaterials = serviceMaterialsRes.data || []; successCount += 1; }
     else result.errors.push(`service_materials: ${serviceMaterialsRes.error.message}`);
 
-    const reviewsRes = await loadReviewsDataset(supabase);
-    if (!reviewsRes.error) { datasets.reviews = reviewsRes.data || []; successCount += 1; }
-    else result.errors.push(`reviews: ${reviewsRes.error.message}`);
+    const reviewsLoaded = await loadReviewsIntoDatasets(datasets, result);
+    if (reviewsLoaded) successCount += 1;
 
     const dashboardRes = await safeSelect(ADMIN_CONFIG.tables.dashboardToday, (q) => q.select('*').limit(1).maybeSingle());
     if (!dashboardRes.error && dashboardRes.data) { datasets.dashboardToday = dashboardRes.data; successCount += 1; }

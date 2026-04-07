@@ -116,6 +116,20 @@ window.AdminApp = (() => {
     $('#logoutButton')?.addEventListener('click', logout);
   }
 
+  function isAuthFailure(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('sessão não encontrada')
+      || message.includes('sessao não encontrada')
+      || message.includes('sessao nao encontrada')
+      || message.includes('sessão nao encontrada')
+      || message.includes('usuário sem permissão administrativa')
+      || message.includes('usuario sem permissão administrativa')
+      || message.includes('usuario sem permissao administrativa')
+      || message.includes('refresh token')
+      || message.includes('jwt')
+      || message.includes('auth');
+  }
+
   async function init() {
     const statusEl = document.getElementById('bootStatus');
     try {
@@ -125,13 +139,29 @@ window.AdminApp = (() => {
 
       bindEvents();
       lucide.createIcons();
+      renderAll();
+
       if (statusEl) statusEl.textContent = 'Carregando dados do painel...';
-      await loadData();
+      try {
+        await loadData();
+      } catch (loadError) {
+        console.error('Falha ao carregar datasets do painel:', loadError);
+        setConnectionUi('mock', [loadError.message || 'Falha ao carregar dados do painel.']);
+        renderAll();
+      }
+
       document.body.classList.remove('admin-loading');
       if (statusEl) statusEl.remove();
     } catch (error) {
       console.error('Falha ao iniciar painel:', error);
-      window.location.replace('./login.html');
+      if (isAuthFailure(error)) {
+        window.location.replace('./login.html?reason=session');
+        return;
+      }
+      document.body.classList.remove('admin-loading');
+      if (statusEl) {
+        statusEl.textContent = `Falha ao iniciar o painel: ${error.message || 'erro desconhecido'}`;
+      }
     }
   }
 

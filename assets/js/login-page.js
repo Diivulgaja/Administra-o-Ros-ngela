@@ -13,6 +13,11 @@
 
   async function tryRecoverExistingSession() {
     if (isRedirecting) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason')) {
+      statusEl.textContent = 'Faça login novamente para continuar.';
+      return;
+    }
     try {
       statusEl.textContent = 'Verificando sessão existente...';
       const session = await window.AdminAuth.waitForSession(900);
@@ -28,7 +33,7 @@
       }
       isRedirecting = true;
       statusEl.textContent = 'Sessão encontrada. Entrando no painel...';
-      window.location.replace('./index.html?v=20260406e');
+      window.location.replace('./index.html?v=20260407loginfix');
     } catch (error) {
       console.error('Falha ao recuperar sessão no login:', error);
       statusEl.textContent = '';
@@ -48,7 +53,7 @@
       await window.AdminAuth.signIn(email, password);
       isRedirecting = true;
       statusEl.textContent = 'Login realizado. Redirecionando...';
-      window.location.replace('./index.html?v=20260406e');
+      window.location.replace('./index.html?v=20260407loginfix');
     } catch (error) {
       console.error(error);
       showError(error.message || 'Erro ao entrar.');
