@@ -380,11 +380,36 @@ window.AdminSupabase = (() => {
       throw new Error('Este item ainda não é um agendamento real do banco.');
     }
 
-    const rpc = await supabase.rpc('mark_appointment_completed_and_enable_review', { p_appointment_id: id });
+    const timestamp = new Date().toISOString();
+    const direct = await supabase
+      .from(ADMIN_CONFIG.tables.appointments)
+      .update({
+        attendance_status: 'completed',
+        can_review: false,
+        reviewed_at: null,
+        status: 'confirmed',
+        confirmed_at: timestamp
+      })
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+
+    if (!direct.error) return direct.data;
+
+    const rpc = await supabase.rpc('complete_appointment_without_releasing_review', { p_appointment_id: id });
     if (!rpc.error) return rpc.data;
 
+    throw direct.error || rpc.error;
+  }
+
+  async function releaseAppointmentReview(id) {
+    const supabase = getClient();
+    if (!isUuid(id)) {
+      throw new Error('Este item ainda não é um agendamento real do banco.');
+    }
+
     const timestamp = new Date().toISOString();
-    const fallback = await supabase
+    const direct = await supabase
       .from(ADMIN_CONFIG.tables.appointments)
       .update({
         attendance_status: 'completed',
@@ -397,28 +422,12 @@ window.AdminSupabase = (() => {
       .select('*')
       .maybeSingle();
 
-    if (fallback.error) throw fallback.error;
-    return fallback.data;
-  }
-
-  async function releaseAppointmentReview(id) {
-    const supabase = getClient();
-    if (!isUuid(id)) {
-      throw new Error('Este item ainda não é um agendamento real do banco.');
-    }
+    if (!direct.error) return direct.data;
 
     const rpc = await supabase.rpc('release_appointment_review', { p_appointment_id: id });
     if (!rpc.error) return rpc.data;
 
-    const { data, error } = await supabase
-      .from(ADMIN_CONFIG.tables.appointments)
-      .update({ can_review: true, reviewed_at: null })
-      .eq('id', id)
-      .select('*')
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
+    throw direct.error || rpc.error;
   }
 
   async function savePayment(payload) {

@@ -32,7 +32,7 @@ window.AdminAgenda = (() => {
     try {
       await window.AdminSupabase.concludeAppointment(id);
       await window.AdminApp.reloadData();
-      notify({ title: 'Atendimento concluído', message: 'A avaliação já ficou pronta para ser liberada no perfil da cliente.', variant: 'success' });
+      notify({ title: 'Atendimento concluído', message: 'Agora a avaliação pode ser liberada manualmente no perfil da cliente.', variant: 'success' });
     } catch (error) {
       notify({ title: 'Falha ao concluir', message: error.message || 'Não foi possível concluir o atendimento.', variant: 'error' });
     }
